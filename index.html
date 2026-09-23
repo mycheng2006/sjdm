@@ -3,9 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="format-detection" content="telephone=no">
 <title>随机抽取</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -14,17 +11,13 @@
     background: radial-gradient(circle at 50% 45%, #16224e 0%, #0a1030 55%, #04071a 100%);
     font-family: "Microsoft YaHei","PingFang SC","HarmonyOS Sans",arial,sans-serif;
     color:#fff;
-    -webkit-user-select: none; -moz-user-select: none; user-select: none;
+    -webkit-user-select: none; user-select: none;
     touch-action: manipulation;
-    -webkit-text-size-adjust: 100%;
   }
-  #bgCanvas { position:absolute; inset:0; z-index:0; pointer-events:none;
-    position:fixed;
-    top:0; left:0; width:100%; height:100%;
-  }
+  #bgCanvas { position:absolute; inset:0; z-index:0; pointer-events:none; }
   #halo {
     position:absolute; left:50%; top:50%;
-    width: 70vmin; height:70vmin;
+    width:70vmin; height:70vmin;
     margin-left:-35vmin; margin-top:-35vmin;
     border-radius:50%;
     background: radial-gradient(circle,
@@ -42,25 +35,21 @@
   #stage {
     position:absolute; inset:0; overflow:hidden;
     z-index:2; transform-origin: 50% 50%;
-    -webkit-backface-visibility: hidden; backface-visibility: hidden;
   }
   #stage.pulse { animation: stagePulse 0.7s ease-out; }
   @keyframes stagePulse {
-    0%   { transform: scale(1);    filter: brightness(1); -webkit-filter: brightness(1); }
-    25%  { transform: scale(1.06); filter: brightness(1.8) saturate(1.4); -webkit-filter: brightness(1.8) saturate(1.4); }
-    100% { transform: scale(1);    filter: brightness(1); -webkit-filter: brightness(1); }
+    0%   { transform: scale(1);    filter: brightness(1); }
+    25%  { transform: scale(1.05); filter: brightness(1.6) saturate(1.3); }
+    100% { transform: scale(1);    filter: brightness(1); }
   }
   #stage span {
     position:absolute; left:50%; top:50%;
-    white-space:nowrap;
-    will-change:transform, opacity;
+    white-space:nowrap; will-change:transform, opacity;
     transform-origin:50% 50%;
     color:#fff; font-size:22px;
     text-shadow: 0 0 6px rgba(120,180,255,0.6);
     transition: color .3s;
-    -webkit-backface-visibility: hidden; backface-visibility: hidden;
-    -webkit-transform: translate3d(0,0,0);
-    transform: translate3d(0,0,0);
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
   }
   #stage span.picked {
     color: #555 !important;
@@ -77,15 +66,13 @@
     -webkit-backdrop-filter: blur(3px);
     backdrop-filter: blur(3px);
     align-items:center; justify-content:center;
-    -webkit-flex-wrap:wrap; flex-wrap:wrap;
-    -webkit-align-content:center; align-content:center;
-    -webkit-box-pack:center; -ms-flex-pack:center;
-    gap: 1vh 2vw;
-    padding: 4vh 4vw;
+    flex-wrap:wrap; align-content:center;
+    gap: 0.8vh 1.6vw;
+    padding: 3vh 3vw;
     overflow:hidden;
     animation: fadeIn 0.35s ease both;
   }
-  #result.show { display: -webkit-flex; display: flex; }
+  #result.show { display:flex; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
   #result span {
@@ -94,7 +81,6 @@
     font-weight: 700;
     color: #ffe08a;
     background: linear-gradient(180deg, #fff3c4 0%, #ffcf55 100%);
-    background: -webkit-linear-gradient(180deg, #fff3c4 0%, #ffcf55 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -104,15 +90,12 @@
     filter:
       drop-shadow(0 0 6px rgba(255,210,90,0.55))
       drop-shadow(0 0 18px rgba(255,160,40,0.35));
-    -webkit-filter:
-      drop-shadow(0 0 6px rgba(255,210,90,0.55))
-      drop-shadow(0 0 18px rgba(255,160,40,0.35));
-    animation: pop 0.5s cubic-bezier(0.25, 1.3, 0.4, 1) both;
+    animation: flyIn 0.85s cubic-bezier(0.19, 1, 0.22, 1) both;
   }
-  @keyframes pop {
-    0%   { transform: scale(0.75); opacity: 0; }
-    60%  { transform: scale(1.05); opacity: 1; }
-    100% { transform: scale(1);    opacity: 1; }
+  @keyframes flyIn {
+    0% { transform: translate(var(--from-x, 0), var(--from-y, 0)) scale(0.35); opacity: 0.9; }
+    60% { opacity: 1; }
+    100% { transform: translate(0, 0) scale(1); opacity: 1; }
   }
 
   .tools {
@@ -121,30 +104,18 @@
     bottom: max(16px, env(safe-area-inset-bottom));
     z-index:200;
     display: flex;
-    display: -webkit-flex;
     flex-wrap: wrap;
-    -webkit-flex-wrap: wrap;
     justify-content: flex-end;
-    -webkit-justify-content: flex-end;
     max-width: 60vw;
   }
   .tools button {
-    display:inline-block;
-    margin:4px;
-    padding:10px 20px;
-    font-size:16px;
-    border:none;
-    border-radius:8px;
-    background:#e6e6e6;
-    color:#333;
-    cursor:pointer;
-    font-family:inherit;
-    -webkit-appearance: none;
-    appearance: none;
+    display:inline-block; margin:4px; padding:10px 20px;
+    font-size:16px; border:none; border-radius:8px;
+    background:#e6e6e6; color:#333; cursor:pointer;
+    font-family:inherit; -webkit-appearance: none; appearance: none;
     transition: transform 0.1s;
-    -webkit-transition: -webkit-transform 0.1s;
   }
-  .tools button:active { transform: scale(0.94); -webkit-transform: scale(0.94); }
+  .tools button:active { transform: scale(0.94); }
   .tools button.active { background:#ca3c3c; color:#fff; }
   .tools .start { background:#1cb841; color:#fff; }
   .tools .stop  { background:#ca3c3c; color:#fff; }
@@ -152,29 +123,10 @@
   .tools .voice { background:#7e57c2; color:#fff; }
   .tools .voice.off { background:#888; }
 
-  /* ================= 手机竖屏适配 ================= */
   @media (max-width: 700px), (pointer: coarse) {
-    .tools {
-      right: 8px;
-      bottom: max(8px, env(safe-area-inset-bottom));
-      max-width: 96vw;
-    }
-    .tools button {
-      margin: 3px;
-      padding: 12px 16px;
-      font-size: 17px;
-      border-radius: 8px;
-      min-width: 48px;
-      min-height: 48px;
-    }
+    .tools { right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); max-width: 96vw; }
+    .tools button { margin: 3px; padding: 12px 16px; font-size: 17px; min-width: 48px; min-height: 48px; }
     #halo { width: 80vmin; height: 80vmin; margin-left:-40vmin; margin-top:-40vmin; }
-  }
-
-  @media (orientation: landscape) and (max-width: 900px) {
-    .tools button {
-      padding: 8px 14px;
-      font-size: 15px;
-    }
   }
 </style>
 </head>
@@ -188,7 +140,7 @@
   <button data-count="2">2</button>
   <button data-count="1" class="active">1</button>
   <button id="btnStart" class="start">开始</button>
-  <button id="btnReset" class="reset">重置</button>
+  <button id="btnReset" class="reset">重置抽取</button>
   <button id="btnVoice" class="voice">🔊</button>
 </div>
 
@@ -205,16 +157,7 @@
   var btnVoice = document.getElementById('btnVoice');
   var countBtns = document.querySelectorAll('.tools button[data-count]');
 
-  // ================= 设备检测 =================
-  var UA = (navigator.userAgent || '').toLowerCase();
-  var isHarmony = /harmonyos|arkweb|huaweibrowser|openharmony/i.test(UA) ||
-                  (navigator.userAgentData && /harmony/i.test(navigator.userAgentData.platform || ''));
-  var isIOS = /iphone|ipad|ipod/i.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  var isAndroid = /android/i.test(UA);
-  var isMobile = isIOS || isAndroid || isHarmony ||
-                 /mobile|phone|pad/i.test(UA);
-
-  // ================= 名单 =================
+  // ================= 名单解析（支持多音字） =================
   var people = [];
   if (typeof nameListText === 'string') {
     nameListText.split(/\r?\n/).forEach(function(line){
@@ -238,93 +181,82 @@
     return;
   }
 
-  // ================= 记录 =================
+  // ================= 抽取记录 =================
   var choosed = {};
-  try { choosed = JSON.parse(localStorage.getItem('choosed_v12') || '{}'); } catch(e){}
+  try { choosed = JSON.parse(localStorage.getItem('choosed_v15') || '{}'); } catch(e){}
   function saveChoosed(){
-    try { localStorage.setItem('choosed_v12', JSON.stringify(choosed)); } catch(e){}
+    try { localStorage.setItem('choosed_v15', JSON.stringify(choosed)); } catch(e){}
   }
 
-  // ================= 星空 =================
+  // ================= 3D 透视星空 =================
   var stars = [];
-  var viewW = window.innerWidth, viewH = window.innerHeight;
+  var viewW = 0, viewH = 0;
+  var starFocal = 0;
 
   function initStars(){
     viewW = window.innerWidth;
     viewH = window.innerHeight;
-    // 手机/鸿蒙 dpr 高，限制物理像素，避免卡顿
-    var dpr = window.devicePixelRatio || 1;
-    if (isMobile) dpr = Math.min(dpr, 1.5);
-    else          dpr = Math.min(dpr, 2);
-
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     bgCanvas.width  = Math.round(viewW * dpr);
     bgCanvas.height = Math.round(viewH * dpr);
     bgCanvas.style.width  = viewW + 'px';
     bgCanvas.style.height = viewH + 'px';
-    if (bgCtx.setTransform) bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    else { bgCtx.scale(dpr, dpr); }
+    bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+    starFocal = Math.max(viewW, viewH) * 1.2;
     stars = [];
-    var count = Math.round(viewW * viewH / (isMobile ? 22000 : 14000));
-    if (count < 40)  count = 40;
-    if (count > 160) count = 160;
-    for (var i = 0; i < count; i++){
+    for (var i = 0; i < 420; i++){
       stars.push({
         x: Math.random() * viewW,
         y: Math.random() * viewH,
-        r: Math.random() * 1.6 + 0.3,
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.4 + Math.random() * 1.2,
-        base: 0.25 + Math.random() * 0.6,
-        vx: (Math.random() - 0.5) * 0.06,
-        vy: (Math.random() - 0.5) * 0.06
+        z: Math.random() * starFocal,
+        b: 0.4 + Math.random() * 0.6
       });
     }
   }
+
   function drawStars(t){
     bgCtx.clearRect(0, 0, viewW, viewH);
+    var cx = viewW / 2, cy = viewH / 2;
     for (var i = 0; i < stars.length; i++){
       var s = stars[i];
-      s.x += s.vx; s.y += s.vy;
-      if (s.x < 0) s.x = viewW;
-      if (s.x > viewW) s.x = 0;
-      if (s.y < 0) s.y = viewH;
-      if (s.y > viewH) s.y = 0;
-      var tw = 0.45 + 0.55 * Math.sin(t * 0.001 * s.speed + s.phase);
+      s.z -= 0.9;
+      if (s.z <= 1) { s.z = starFocal; s.x = Math.random() * viewW; s.y = Math.random() * viewH; }
+      var scale = starFocal / s.z;
+      var px = (s.x - cx) * scale + cx;
+      var py = (s.y - cy) * scale + cy;
+      if (px < -50 || px > viewW + 50 || py < -50 || py > viewH + 50) continue;
+      var r = Math.min(2.4, scale * 0.7);
+      var a = Math.min(1, (1 - s.z / starFocal) * 1.3 + 0.08) * s.b;
+      a *= 0.85 + 0.15 * Math.sin(t * 0.002 + i);
       bgCtx.beginPath();
-      bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      bgCtx.fillStyle = 'rgba(180,210,255,' + (s.base * tw).toFixed(3) + ')';
+      bgCtx.arc(px, py, r, 0, Math.PI * 2);
+      bgCtx.fillStyle = 'rgba(180,210,255,' + a.toFixed(3) + ')';
       bgCtx.fill();
     }
   }
 
-  // ================= 球体 =================
+  // ================= 名字球 =================
   var items = [];
   function buildStage(){
     stage.innerHTML = '';
     items = [];
-    var frag = document.createDocumentFragment();
-    var N = people.length;
-    var inc = Math.PI * (3 - Math.sqrt(5));
-    var off = 2 / N;
-    for (var i = 0; i < N; i++){
-      var p = people[i];
+    people.forEach(function(p){
       var el = document.createElement('span');
       el.textContent = p.name;
       if (choosed[p.name]) el.className = 'picked';
-      var st = el.style;
-      st.opacity = '0';
-      frag.appendChild(el);
+      stage.appendChild(el);
+      items.push({ el: el, name: p.name, tts: p.tts });
+    });
+    var N = items.length || 1;
+    var inc = Math.PI * (3 - Math.sqrt(5));
+    var off = 2 / N;
+    items.forEach(function(it, i){
       var y = i * off - 1 + off/2;
       var r = Math.sqrt(Math.max(0, 1 - y*y));
       var phi = i * inc;
-      items.push({
-        el: el, style: st,
-        name: p.name, tts: p.tts,
-        x: Math.cos(phi) * r, y: y, z: Math.sin(phi) * r
-      });
-    }
-    stage.appendChild(frag);
+      it.x = Math.cos(phi) * r; it.y = y; it.z = Math.sin(phi) * r;
+    });
   }
 
   // ================= 动画 =================
@@ -332,18 +264,18 @@
   var velY = 0, velX = 0;
   var targetVelY = 0.0025, targetVelX = 0.0008;
   var running = false;
-  var radius = 300, focal = 900;
+  var radius = 300;
   var lastT = 0;
 
+  function isMobile(){
+    return /Mobi|Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent);
+  }
   function resize(){
     var w = window.innerWidth, h = window.innerHeight;
-    var minSide = Math.min(w, h);
-    // 鸿蒙/手机球体半径稍大，显得饱满
-    radius = minSide * (isMobile ? 0.42 : 0.36);
-    focal  = Math.max(w, h) * 1.2;
-    viewW = w; viewH = h;
+    radius = Math.min(w, h) * (isMobile() ? 0.42 : 0.36);
   }
   resize();
+  window.addEventListener('resize', function(){ resize(); initStars(); });
 
   function step(dt){
     var k = dt / 16.7;
@@ -357,6 +289,7 @@
 
     var cy = Math.cos(angleY), sy = Math.sin(angleY);
     var cx = Math.cos(angleX), sx = Math.sin(angleX);
+    var focal2 = Math.max(window.innerWidth, window.innerHeight) * 1.2;
 
     for (var i = 0; i < items.length; i++){
       var it = items[i];
@@ -364,15 +297,16 @@
       var z1 =  it.x * sy + it.z * cy;
       var y2 =  it.y * cx - z1 * sx;
       var z2 =  it.y * sx + z1 * cx;
-      var scale = focal / (focal - z2 * radius);
+      var scale = focal2 / (focal2 - z2 * radius);
       var tx = x1 * radius * scale;
       var ty = y2 * radius * scale;
       var depth = (z2 + 1) / 2;
-      var st = it.style;
+      var alpha = 0.15 + 0.85 * depth;
+      var size  = 10 + 16 * depth;
+      var st = it.el.style;
       st.transform = 'translate3d(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px,0) scale(' + scale.toFixed(3) + ') translate(-50%,-50%)';
-      st.webkitTransform = st.transform;
-      st.fontSize  = (10 + 16 * depth).toFixed(1) + 'px';
-      st.opacity   = (0.15 + 0.85 * depth).toFixed(3);
+      st.fontSize  = size.toFixed(1) + 'px';
+      st.opacity   = alpha.toFixed(3);
       st.zIndex    = (depth * 1000) | 0;
       st.textShadow = '0 0 ' + (6 + 10 * depth).toFixed(0) + 'px rgba(160,200,255,' + (0.35 + 0.55 * depth).toFixed(2) + ')';
     }
@@ -404,119 +338,113 @@
     }
     saveChoosed();
     var ret = [];
-    for (var m = 0; m < picked.length; m++) ret.push({ name: picked[m].name, tts: picked[m].tts });
+    for (var m = 0; m < picked.length; m++){
+      ret.push({ name: picked[m].name, tts: picked[m].tts });
+    }
     return ret;
   }
 
-  // ================= 布局 & 字号 =================
-  function pickLayout(count, w, h){
-    var isPortrait = h > w;
-    var cols, rows;
-    if (count <= 1) { cols = 1; rows = 1; }
-    else if (count <= 2) {
-      if (isPortrait) { cols = 1; rows = 2; }
-      else            { cols = 2; rows = 1; }
-    }
-    else if (count <= 3) {
-      if (isPortrait) { cols = 1; rows = 3; }
-      else            { cols = 3; rows = 1; }
-    }
-    else if (count <= 4) { cols = 2; rows = 2; }
-    else if (count <= 6) {
-      if (isPortrait) { cols = 2; rows = 3; }
-      else            { cols = 3; rows = 2; }
-    }
-    else {
-      cols = Math.ceil(Math.sqrt(count));
-      rows = Math.ceil(count / cols);
-    }
-    return { cols: cols, rows: rows };
-  }
-
+  // ================= 字号 =================
   function pickFontSize(count, w, h, maxLen){
-    var lay = pickLayout(count, w, h);
-    var boxW = w * 0.82, boxH = h * 0.72;
-    var cellW = boxW / lay.cols - w * 0.02;
-    var cellH = boxH / lay.rows - h * 0.02;
-    var byW = cellW / Math.max(2, maxLen);
-    var byH = cellH / 1.15;
-    return Math.round(Math.min(byW, byH));
+    var cols, rows;
+    if (count <= 1)      { cols = 1; rows = 1; }
+    else if (count <= 2) { cols = 2; rows = 1; }
+    else if (count <= 3) { cols = 3; rows = 1; }
+    else if (count <= 4) { cols = 2; rows = 2; }
+    else if (count <= 6) { cols = 3; rows = 2; }
+    else                 { cols = Math.ceil(Math.sqrt(count)); rows = Math.ceil(count / cols); }
+    var boxW = w * 0.75, boxH = h * 0.75;
+    var cellW = boxW / cols - w * 0.02;
+    var cellH = boxH / rows - h * 0.02;
+    return Math.round(Math.min(cellW / Math.max(2, maxLen), cellH / 1.15));
   }
 
-  // ================= 语音（兼容鸿蒙）=================
+  // ================= 语音（修复 iOS） =================
   var voiceOn = true;
   var speechSupported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
   var zhVoice = null;
-  var speechWarmedUp = false;
-  var voicesLoaded = false;
+  var speechPrimed = false;
+  var pendingTTS = null;
 
-  function pickZhVoice(){
-    if (!speechSupported) return null;
-    var voices = [];
-    try { voices = window.speechSynthesis.getVoices() || []; } catch(e){ return null; }
-    if (!voices.length) return null;
-    voicesLoaded = true;
+  // 清理 iOS 26 会引发 bug 的字符
+  function sanitizeForTTS(text){
+    return String(text)
+      .replace(/[<>]/g, function(c){ return c === '<' ? '＜' : '＞'; })
+      .replace(/[\u0000-\u001F\u007F]/g, '')
+      .trim();
+  }
 
-    // 优先精确匹配
-    for (var i = 0; i < voices.length; i++){
-      var v = voices[i];
-      var lang = (v.lang || '').toLowerCase();
-      // 鸿蒙/华为系统 TTS 的 lang 有时是 "zh-CN"，有时是 "zh_CN"
-      if (lang.indexOf('zh') === 0 || lang.indexOf('cmn') === 0 || lang.indexOf('yue') === 0) {
-        if (!zhVoice) zhVoice = v;
-        // 优先常见中文女声（苹果、华为、小米、Google 都覆盖）
-        if (/huihui|yaoyao|xiaoxiao|tingting|ting-ting|meijia|mei-jia|sinji|google 普通话|普通话|female|女/i.test(v.name)) {
-          zhVoice = v;
-          break;
+  // 轮询加载语音列表（iOS 异步加载，必须轮询）
+  function pollVoices(cb){
+    if (!speechSupported) return;
+    var attempts = 0;
+    var timer = setInterval(function(){
+      attempts++;
+      var voices = window.speechSynthesis.getVoices() || [];
+      var found = false;
+      for (var i = 0; i < voices.length; i++){
+        var v = voices[i];
+        var lang = (v.lang || '').toLowerCase();
+        if (lang.indexOf('zh') === 0 || lang.indexOf('cmn') === 0 || lang.indexOf('yue') === 0){
+          if (!zhVoice) zhVoice = v;
+          if (/tingting|ting-ting|huihui|yaoyao|xiaoxiao|meijia|sinji|普通话|女/i.test(v.name)){
+            zhVoice = v;
+            found = true;
+            break;
+          }
         }
       }
-    }
-    return zhVoice;
+      if (found || attempts > 20){
+        clearInterval(timer);
+        if (cb) cb();
+      }
+    }, 200);
   }
 
-  function initSpeech(){
-    if (!speechSupported) return;
-    // 多次尝试，鸿蒙/安卓上 voices 是异步加载的
-    pickZhVoice();
-    if (typeof window.speechSynthesis.onvoiceschanged !== 'undefined'){
-      window.speechSynthesis.onvoiceschanged = pickZhVoice;
-    }
-    // 轮询兜底（鸿蒙 ArkWeb 上事件有时不触发）
-    var poll = setInterval(function(){
-      if (pickZhVoice()) clearInterval(poll);
-    }, 400);
-    setTimeout(function(){ clearInterval(poll); }, 8000);
-  }
-  initSpeech();
-
-  // 预热：在用户手势里调用，激活语音引擎（iOS / 鸿蒙都可能需要）
-  function warmupSpeech(){
-    if (!speechSupported || speechWarmedUp) return;
-    speechWarmedUp = true;
+  // 在用户手势中预热语音
+  function primeSpeech(){
+    if (!speechSupported || speechPrimed) return;
+    speechPrimed = true;
     try {
       var u = new SpeechSynthesisUtterance(' ');
       u.lang = 'zh-CN';
       u.volume = 0;
-      u.rate = 1.0;
       window.speechSynthesis.speak(u);
+      if (pendingTTS){
+        var tts = pendingTTS;
+        pendingTTS = null;
+        setTimeout(function(){ speakNames(tts); }, 200);
+      }
     } catch(e){}
   }
 
-  // 播报名字（同步触发，兼容 iOS 手势要求）
   function speakNames(list){
     if (!voiceOn || !speechSupported || !list.length) return;
-    try { window.speechSynthesis.cancel(); } catch(e){}
-    if (!zhVoice) pickZhVoice();
 
+    if (!speechPrimed){
+      pendingTTS = list;
+      return;
+    }
+
+    try { window.speechSynthesis.cancel(); } catch(e){}
+
+    if (!zhVoice){
+      pollVoices(function(){ doSpeak(list); });
+    } else {
+      doSpeak(list);
+    }
+  }
+
+  function doSpeak(list){
     var idx = 0;
     function next(){
       if (idx >= list.length) return;
-      var name = list[idx++];
-      var u;
-      try { u = new SpeechSynthesisUtterance(name); }
-      catch(e){ return; }
+      var raw = list[idx++];
+      var name = sanitizeForTTS(raw);
+      if (!name){ next(); return; }
+
+      var u = new SpeechSynthesisUtterance(name);
       u.lang = 'zh-CN';
-      // 如果没找到中文 voice，也让系统自己挑（鸿蒙上通常能自动匹配）
       if (zhVoice) u.voice = zhVoice;
       u.rate = 0.95;
       u.pitch = 1.0;
@@ -525,23 +453,44 @@
       u.onerror = function(){ setTimeout(next, 130); };
       try { window.speechSynthesis.speak(u); } catch(e){}
     }
-    // 直接同步 speak，避免 iOS / 鸿蒙的手势上下文过期
+    // 同步触发，不要在 setTimeout 里调用 speak()
     next();
   }
 
+  // ===== 页面任何一次点击都自动预热语音（iOS 关键） =====
+  function bindPrimeOnAnyGesture(){
+    var done = false;
+    function handler(){
+      if (done) return;
+      done = true;
+      primeSpeech();
+      document.removeEventListener('touchstart', handler);
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('click', handler);
+    }
+    document.addEventListener('touchstart', handler, { passive: true });
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('click', handler);
+  }
+  bindPrimeOnAnyGesture();
+
+  // 语音开关按钮
   btnVoice.addEventListener('click', function(){
-    if (!speechSupported){ alert('当前浏览器不支持语音播报'); return; }
+    if (!speechSupported){ alert('当前浏览器不支持语音播报。'); return; }
+    primeSpeech();
     voiceOn = !voiceOn;
     if (voiceOn){
       btnVoice.textContent = '🔊';
       btnVoice.className = 'voice';
-      try {
-        window.speechSynthesis.cancel();
-        var t = new SpeechSynthesisUtterance('语音已开启');
-        t.lang = 'zh-CN';
-        if (zhVoice) t.voice = zhVoice;
-        window.speechSynthesis.speak(t);
-      } catch(e){}
+      pollVoices(function(){
+        try {
+          window.speechSynthesis.cancel();
+          var t = new SpeechSynthesisUtterance('语音已开启');
+          t.lang = 'zh-CN';
+          if (zhVoice) t.voice = zhVoice;
+          window.speechSynthesis.speak(t);
+        } catch(e){}
+      });
     } else {
       btnVoice.textContent = '🔇';
       btnVoice.className = 'voice off';
@@ -549,25 +498,41 @@
     }
   });
 
+  // 页面加载后就开始轮询语音列表
+  if (speechSupported){
+    pollVoices(function(){ /* 静默准备 */ });
+  }
+
   // ================= 按钮 =================
   var selected = 1;
-  for (var bi = 0; bi < countBtns.length; bi++){
-    (function(b){
-      b.addEventListener('click', function(){
-        for (var j = 0; j < countBtns.length; j++) countBtns[j].classList.remove('active');
-        b.classList.add('active');
-        selected = parseInt(b.getAttribute('data-count'), 10);
-        resultEl.classList.remove('show');
-      });
-    })(countBtns[bi]);
-  }
+  countBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      countBtns.forEach(function(x){ x.classList.remove('active'); });
+      b.classList.add('active');
+      selected = parseInt(b.dataset.count, 10);
+      resultEl.classList.remove('show');
+    });
+  });
 
   function spinFast(){ targetVelY = 0.16; targetVelX = 0.035; }
   function spinIdle(){ targetVelY = 0.0025; targetVelX = 0.0008; }
 
+  function getBallPos(name){
+    for (var i = 0; i < items.length; i++){
+      if (items[i].name === name){
+        var r = items[i].el.getBoundingClientRect();
+        return {
+          x: r.left + r.width / 2 - window.innerWidth / 2,
+          y: r.top + r.height / 2 - window.innerHeight / 2
+        };
+      }
+    }
+    return { x: 0, y: 0 };
+  }
+
+  // ================= 开始 / 停止 =================
   btnStart.addEventListener('click', function(){
-    // 用户手势里预热语音（iOS + 鸿蒙都需要）
-    warmupSpeech();
+    primeSpeech();
 
     if (!running){
       spinFast();
@@ -590,24 +555,30 @@
       setTimeout(function(){ stage.classList.remove('pulse'); }, 720);
 
       if (!arr.length){
-        resultEl.innerHTML = '<span style="font-size:100px;-webkit-text-fill-color:#ffe08a;">已抽完</span>';
+        resultEl.innerHTML = '<span style="--from-x:0;--from-y:0;font-size:120px;-webkit-text-fill-color:#ffe08a;">已抽完</span>';
         resultEl.classList.add('show');
         return;
       }
 
       var w = window.innerWidth, h = window.innerHeight;
       var localMax = 2;
-      for (var i = 0; i < arr.length; i++){
-        if (arr[i].name.length > localMax) localMax = arr[i].name.length;
-      }
+      arr.forEach(function(p){ if (p.name.length > localMax) localMax = p.name.length; });
       var fs = pickFontSize(arr.length, w, h, localMax);
 
       var html = '';
       for (var i = 0; i < arr.length; i++){
-        html += '<span style="font-size:' + fs + 'px;animation-delay:' + (i * 0.12).toFixed(2) + 's;">' +
+        var pos = getBallPos(arr[i].name);
+        var delay = (i * 0.12).toFixed(2);
+        html += '<span style="' +
+          '--from-x:' + pos.x.toFixed(0) + 'px;' +
+          '--from-y:' + pos.y.toFixed(0) + 'px;' +
+          'font-size:' + fs + 'px;' +
+          'animation-delay:' + delay + 's;' +
+          '">' +
           arr[i].name.replace(/[&<>"']/g, function(c){
             return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
-          }) + '</span>';
+          }) +
+        '</span>';
       }
       resultEl.innerHTML = html;
       resultEl.classList.add('show');
@@ -622,16 +593,13 @@
     if (confirm('确定要重置抽取记录么？（名单文件不受影响）')){
       choosed = {};
       saveChoosed();
-      for (var i = 0; i < items.length; i++) items[i].el.className = '';
+      items.forEach(function(it){ it.el.className = ''; });
       resultEl.classList.remove('show');
       if (speechSupported) { try { window.speechSynthesis.cancel(); } catch(e){} }
     }
   });
 
-  // ================= 尺寸 & 旋转 =================
-  function onResize(){
-    resize();
-    initStars();
+  window.addEventListener('resize', function(){
     if (!resultEl.classList.contains('show')) return;
     var spans = resultEl.querySelectorAll('span');
     if (!spans.length) return;
@@ -641,24 +609,7 @@
     }
     var fs = pickFontSize(spans.length, window.innerWidth, window.innerHeight, localMax);
     for (var i = 0; i < spans.length; i++) spans[i].style.fontSize = fs + 'px';
-  }
-  window.addEventListener('resize', onResize);
-  window.addEventListener('orientationchange', function(){ setTimeout(onResize, 300); });
-  // 鸿蒙地址栏收起/展开时用 visualViewport 更精确
-  if (window.visualViewport){
-    window.visualViewport.addEventListener('resize', onResize);
-  }
-
-  // iOS / 鸿蒙上如果语音卡住，触摸屏幕时恢复
-  document.addEventListener('touchstart', function(){
-    if (!speechSupported) return;
-    try {
-      if (window.speechSynthesis.speaking === false &&
-          window.speechSynthesis.pending === true){
-        window.speechSynthesis.resume();
-      }
-    } catch(e){}
-  }, { passive: true });
+  });
 
   // ============ 启动 ============
   initStars();
