@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
 <title>随机抽取</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -87,10 +90,16 @@
     padding: 0.05em 0.2em;
     letter-spacing: 0.04em;
     white-space: nowrap;
-    filter:
-      drop-shadow(0 0 6px rgba(255,210,90,0.55))
-      drop-shadow(0 0 18px rgba(255,160,40,0.35));
+    filter: drop-shadow(0 0 8px rgba(255,210,90,0.55));
     animation: flyIn 0.85s cubic-bezier(0.19, 1, 0.22, 1) both;
+  }
+  /* 桌面端两个光晕更亮 */
+  @media (min-width: 701px) and (pointer: fine) {
+    #result span {
+      filter:
+        drop-shadow(0 0 6px rgba(255,210,90,0.55))
+        drop-shadow(0 0 18px rgba(255,160,40,0.35));
+    }
   }
   @keyframes flyIn {
     0% { transform: translate(var(--from-x, 0), var(--from-y, 0)) scale(0.35); opacity: 0.9; }
@@ -98,7 +107,7 @@
     100% { transform: translate(0, 0) scale(1); opacity: 1; }
   }
 
-  /* ============ 按钮区：所有按钮统一大小 ============ */
+  /* ============ 按钮区：电脑右对齐，手机居中 ============ */
   .tools {
     position:absolute;
     right: max(12px, env(safe-area-inset-right));
@@ -107,12 +116,11 @@
     z-index:200;
     display: flex;
     flex-wrap: nowrap;
-    justify-content: flex-end;      /* 电脑右对齐 */
-    align-items: stretch;           /* 高度拉平 */
+    justify-content: flex-end;
+    align-items: stretch;
     gap: 6px;
   }
   .tools button {
-    /* 统一大小：固定宽高 */
     width: 76px;
     height: 46px;
     padding: 0;
@@ -140,18 +148,16 @@
   .tools .voice { background:#7e57c2; color:#fff; }
   .tools .voice.off { background:#888; }
 
-  /* ============ 手机端：居中 + 按钮自适应等宽 ============ */
   @media (max-width: 700px), (pointer: coarse) {
     .tools {
       right: max(6px, env(safe-area-inset-right));
       left: max(6px, env(safe-area-inset-left));
       bottom: max(6px, env(safe-area-inset-bottom));
       gap: 4px;
-      justify-content: center;      /* 手机居中 */
+      justify-content: center;
       overflow: hidden;
     }
     .tools button {
-      /* 手机上：6 个按钮均分整行宽度 */
       width: auto;
       flex: 1 1 0;
       min-width: 0;
@@ -163,12 +169,8 @@
     #halo { width: 80vmin; height: 80vmin; margin-left:-40vmin; margin-top:-40vmin; }
   }
 
-  /* 超窄屏（<380px）再压字号 */
   @media (max-width: 380px) {
-    .tools button {
-      height: 40px;
-      font-size: 13px;
-    }
+    .tools button { height: 40px; font-size: 13px; }
   }
 </style>
 </head>
@@ -199,7 +201,7 @@
   var btnVoice = document.getElementById('btnVoice');
   var countBtns = document.querySelectorAll('.tools button[data-count]');
 
-  // ================= 名单解析 =================
+  // ================= 名单解析（支持多音字） =================
   var people = [];
   if (typeof nameListText === 'string') {
     nameListText.split(/\r?\n/).forEach(function(line){
@@ -225,9 +227,9 @@
 
   // ================= 抽取记录 =================
   var choosed = {};
-  try { choosed = JSON.parse(localStorage.getItem('choosed_v20') || '{}'); } catch(e){}
+  try { choosed = JSON.parse(localStorage.getItem('choosed_v21') || '{}'); } catch(e){}
   function saveChoosed(){
-    try { localStorage.setItem('choosed_v20', JSON.stringify(choosed)); } catch(e){}
+    try { localStorage.setItem('choosed_v21', JSON.stringify(choosed)); } catch(e){}
   }
 
   // ================= 3D 透视星空 =================
@@ -318,6 +320,10 @@
   }
   resize();
   window.addEventListener('resize', function(){ resize(); initStars(); });
+  // 页面从后台切回前台时，重置 lastT，避免一帧跳一大步
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) lastT = 0;
+  });
 
   function step(dt){
     var k = dt / 16.7;
@@ -401,11 +407,12 @@
     return Math.round(Math.min(cellW / Math.max(2, maxLen), cellH / 1.15));
   }
 
-  // ================= 语音（低延迟 + iOS 修复） =================
+  // ================= 语音（低延迟 + iOS 修复 + 看门狗） =================
   var voiceOn = true;
   var speechSupported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
   var zhVoice = null;
   var speechPrimed = false;
+  var voicesReady = false;
 
   function sanitizeForTTS(text){
     return String(text)
@@ -435,6 +442,7 @@
       }
       if (found || attempts > 15){
         clearInterval(timer);
+        voicesReady = true;
         if (cb) cb();
       }
     }, 200);
@@ -455,12 +463,18 @@
   function speakNames(list){
     if (!voiceOn || !speechSupported || !list.length) return;
     if (!speechPrimed) primeSpeech();
-    try { window.speechSynthesis.cancel(); } catch(e){}
-    if (!zhVoice){
-      pollVoices(function(){ doSpeak(list); });
-    } else {
-      doSpeak(list);
+    // 播放前打断上一条队列（如果还没念完）
+    try {
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+      }
+    } catch(e){}
+    // 若还没有中文语音，直接念（不等待轮询），同时后台继续等
+    if (!zhVoice && voicesReady) {
+      // 试过 15 次仍没有中文语音，用它默认的（通常是本地 TTS）
+      zhVoice = null;
     }
+    doSpeak(list);
   }
 
   function doSpeak(list){
@@ -477,13 +491,27 @@
       u.rate = 1.0;
       u.pitch = 1.0;
       u.volume = 1.0;
-      u.onend = function(){ setTimeout(next, 60); };
-      u.onerror = function(){ setTimeout(next, 60); };
-      try { window.speechSynthesis.speak(u); } catch(e){}
+
+      var advanced = false;
+      function advance() {
+        if (advanced) return;
+        advanced = true;
+        setTimeout(next, 60);
+      }
+
+      u.onend = advance;
+      u.onerror = advance;
+      try { window.speechSynthesis.speak(u); } catch(e){ advance(); return; }
+
+      // 看门狗：iOS 上 onend 偶发不触发，900ms 后强制下一条
+      setTimeout(function(){
+        if (!advanced) advance();
+      }, 900);
     }
     next();
   }
 
+  // 页面任何一次手势都自动预热语音
   function bindPrimeOnAnyGesture(){
     var done = false;
     function handler(){
@@ -507,15 +535,18 @@
     if (voiceOn){
       btnVoice.textContent = '🔊';
       btnVoice.className = 'voice';
-      pollVoices(function(){
-        try {
-          window.speechSynthesis.cancel();
-          var t = new SpeechSynthesisUtterance('语音已开启');
-          t.lang = 'zh-CN';
-          if (zhVoice) t.voice = zhVoice;
-          window.speechSynthesis.speak(t);
-        } catch(e){}
-      });
+      // 预热完成后再试读，避免和预热重叠
+      setTimeout(function(){
+        pollVoices(function(){
+          try {
+            window.speechSynthesis.cancel();
+            var t = new SpeechSynthesisUtterance('语音已开启');
+            t.lang = 'zh-CN';
+            if (zhVoice) t.voice = zhVoice;
+            window.speechSynthesis.speak(t);
+          } catch(e){}
+        });
+      }, 150);
     } else {
       btnVoice.textContent = '🔇';
       btnVoice.className = 'voice off';
@@ -523,6 +554,7 @@
     }
   });
 
+  // 页面加载后立即开始准备语音列表
   if (speechSupported){
     pollVoices(function(){ /* 静默准备 */ });
   }
@@ -535,6 +567,7 @@
       b.classList.add('active');
       selected = parseInt(b.dataset.count, 10);
       resultEl.classList.remove('show');
+      resultEl.innerHTML = ''; // 清空旧内容避免闪
     });
   });
 
@@ -554,6 +587,7 @@
     return { x: 0, y: 0 };
   }
 
+  // ================= 开始 / 停止 =================
   btnStart.addEventListener('click', function(){
     primeSpeech();
 
@@ -561,14 +595,16 @@
       spinFast();
       running = true;
       btnStart.textContent = '停止';
-      btnStart.className = 'stop';
+      btnStart.classList.remove('start');
+      btnStart.classList.add('stop');
       resultEl.classList.remove('show');
       if (speechSupported) { try { window.speechSynthesis.cancel(); } catch(e){} }
     } else {
       spinIdle();
       running = false;
       btnStart.textContent = '开始';
-      btnStart.className = 'start';
+      btnStart.classList.remove('stop');
+      btnStart.classList.add('start');
 
       var arr = draw(selected);
 
@@ -614,11 +650,12 @@
 
   btnReset.addEventListener('click', function(){
     if (confirm('确定要重置抽取记录么？（名单文件不受影响）')){
+      if (speechSupported) { try { window.speechSynthesis.cancel(); } catch(e){} }
       choosed = {};
       saveChoosed();
       items.forEach(function(it){ it.el.className = ''; });
       resultEl.classList.remove('show');
-      if (speechSupported) { try { window.speechSynthesis.cancel(); } catch(e){} }
+      resultEl.innerHTML = '';
     }
   });
 
