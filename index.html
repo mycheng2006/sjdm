@@ -98,7 +98,7 @@
     100% { transform: translate(0, 0) scale(1); opacity: 1; }
   }
 
-  /* ============ 按钮区（电脑：右对齐）============ */
+  /* ============ 按钮区（电脑右对齐，手机居中） ============ */
   .tools {
     position:absolute;
     right: max(12px, env(safe-area-inset-right));
@@ -107,7 +107,7 @@
     z-index:200;
     display: flex;
     flex-wrap: nowrap;
-    justify-content: flex-end;      /* 电脑右对齐 */
+    justify-content: flex-end;
     align-items: center;
     gap: 6px;
   }
@@ -127,14 +127,13 @@
   .tools .voice { background:#7e57c2; color:#fff; }
   .tools .voice.off { background:#888; }
 
-  /* ============ 手机端：居中，一行不换行 ============ */
   @media (max-width: 700px), (pointer: coarse) {
     .tools {
       right: max(6px, env(safe-area-inset-right));
-      left: max(6px, env(safe-area-inset-left));   /* 左右都留边距 */
+      left: max(6px, env(safe-area-inset-left));
       bottom: max(6px, env(safe-area-inset-bottom));
       gap: 4px;
-      justify-content: center;                    /* 手机居中 */
+      justify-content: center;
       overflow: hidden;
     }
     .tools button {
@@ -144,22 +143,13 @@
       border-radius: 6px;
       flex: 0 1 auto;
     }
-    .tools button[data-count] {
-      padding: 10px 14px;
-    }
+    .tools button[data-count] { padding: 10px 14px; }
     #halo { width: 80vmin; height: 80vmin; margin-left:-40vmin; margin-top:-40vmin; }
   }
 
-  /* 超窄屏（<380px）再压一点字号 */
   @media (max-width: 380px) {
-    .tools button {
-      font-size: 13px;
-      padding: 10px 8px;
-      min-height: 40px;
-    }
-    .tools button[data-count] {
-      padding: 10px 10px;
-    }
+    .tools button { font-size: 13px; padding: 10px 8px; min-height: 40px; }
+    .tools button[data-count] { padding: 10px 10px; }
   }
 </style>
 </head>
@@ -190,7 +180,7 @@
   var btnVoice = document.getElementById('btnVoice');
   var countBtns = document.querySelectorAll('.tools button[data-count]');
 
-  // ================= 名单解析（支持多音字） =================
+  // ================= 名单解析 =================
   var people = [];
   if (typeof nameListText === 'string') {
     nameListText.split(/\r?\n/).forEach(function(line){
@@ -216,9 +206,9 @@
 
   // ================= 抽取记录 =================
   var choosed = {};
-  try { choosed = JSON.parse(localStorage.getItem('choosed_v18') || '{}'); } catch(e){}
+  try { choosed = JSON.parse(localStorage.getItem('choosed_v19') || '{}'); } catch(e){}
   function saveChoosed(){
-    try { localStorage.setItem('choosed_v18', JSON.stringify(choosed)); } catch(e){}
+    try { localStorage.setItem('choosed_v19', JSON.stringify(choosed)); } catch(e){}
   }
 
   // ================= 3D 透视星空 =================
@@ -392,12 +382,11 @@
     return Math.round(Math.min(cellW / Math.max(2, maxLen), cellH / 1.15));
   }
 
-  // ================= 语音（修复 iOS） =================
+  // ================= 语音（低延迟版） =================
   var voiceOn = true;
   var speechSupported = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
   var zhVoice = null;
   var speechPrimed = false;
-  var pendingTTS = null;
 
   function sanitizeForTTS(text){
     return String(text)
@@ -425,13 +414,15 @@
           }
         }
       }
-      if (found || attempts > 20){
+      // 找到中文语音 或 试了 15 次（约 3 秒）就停
+      if (found || attempts > 15){
         clearInterval(timer);
         if (cb) cb();
       }
     }, 200);
   }
 
+  // 在用户手势中预热语音（只做一次）
   function primeSpeech(){
     if (!speechSupported || speechPrimed) return;
     speechPrimed = true;
@@ -439,25 +430,21 @@
       var u = new SpeechSynthesisUtterance(' ');
       u.lang = 'zh-CN';
       u.volume = 0;
+      u.rate = 1.5;
       window.speechSynthesis.speak(u);
-      if (pendingTTS){
-        var tts = pendingTTS;
-        pendingTTS = null;
-        setTimeout(function(){ speakNames(tts); }, 200);
-      }
     } catch(e){}
   }
 
+  // 立即播报，不延迟
   function speakNames(list){
     if (!voiceOn || !speechSupported || !list.length) return;
 
-    if (!speechPrimed){
-      pendingTTS = list;
-      return;
-    }
+    // 如果还没预热（用户没点过页面），先默默预热
+    if (!speechPrimed) primeSpeech();
 
     try { window.speechSynthesis.cancel(); } catch(e){}
 
+    // 没找到中文语音时快速轮询一次（最多 15 次），不阻塞主流程
     if (!zhVoice){
       pollVoices(function(){ doSpeak(list); });
     } else {
@@ -476,13 +463,15 @@
       var u = new SpeechSynthesisUtterance(name);
       u.lang = 'zh-CN';
       if (zhVoice) u.voice = zhVoice;
-      u.rate = 0.95;
+      u.rate = 1.0;
       u.pitch = 1.0;
       u.volume = 1.0;
-      u.onend = function(){ setTimeout(next, 130); };
-      u.onerror = function(){ setTimeout(next, 130); };
+      // 播完立刻说下一个（只留 60ms 缓冲，听感上几乎无缝）
+      u.onend = function(){ setTimeout(next, 60); };
+      u.onerror = function(){ setTimeout(next, 60); };
       try { window.speechSynthesis.speak(u); } catch(e){}
     }
+    // 关键：同步调用 speak()，不套 setTimeout
     next();
   }
 
@@ -574,6 +563,7 @@
       btnStart.textContent = '开始';
       btnStart.className = 'start';
 
+      // 抽签（同步完成，速度很快）
       var arr = draw(selected);
 
       stage.classList.remove('pulse');
@@ -610,6 +600,7 @@
       resultEl.innerHTML = html;
       resultEl.classList.add('show');
 
+      // ===== 关键：抽签一完成，立刻播报，不用 setTimeout =====
       var ttsArr = [];
       for (var k = 0; k < arr.length; k++) ttsArr.push(arr[k].tts);
       speakNames(ttsArr);
