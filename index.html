@@ -98,16 +98,16 @@
     100% { transform: translate(0, 0) scale(1); opacity: 1; }
   }
 
-  /* ============ 按钮区：右对齐 ============ */
+  /* ============ 按钮区（电脑：右对齐）============ */
   .tools {
     position:absolute;
     right: max(12px, env(safe-area-inset-right));
     bottom: max(12px, env(safe-area-inset-bottom));
-    left: auto;                        /* 不铺满，靠内容撑开 */
+    left: auto;
     z-index:200;
     display: flex;
-    flex-wrap: nowrap;                 /* 强制一行 */
-    justify-content: flex-end;         /* 右对齐 */
+    flex-wrap: nowrap;
+    justify-content: flex-end;      /* 电脑右对齐 */
     align-items: center;
     gap: 6px;
   }
@@ -127,14 +127,14 @@
   .tools .voice { background:#7e57c2; color:#fff; }
   .tools .voice.off { background:#888; }
 
-  /* ============ 手机端：右对齐，整行不换行 ============ */
+  /* ============ 手机端：居中，一行不换行 ============ */
   @media (max-width: 700px), (pointer: coarse) {
     .tools {
       right: max(6px, env(safe-area-inset-right));
-      left: max(6px, env(safe-area-inset-left));   /* 左右都留一点边距 */
+      left: max(6px, env(safe-area-inset-left));   /* 左右都留边距 */
       bottom: max(6px, env(safe-area-inset-bottom));
       gap: 4px;
-      justify-content: flex-end;                  /* 依然右对齐 */
+      justify-content: center;                    /* 手机居中 */
       overflow: hidden;
     }
     .tools button {
@@ -142,10 +142,10 @@
       font-size: 14px;
       min-height: 44px;
       border-radius: 6px;
-      flex: 0 1 auto;                             /* 按内容宽度，不拉伸 */
+      flex: 0 1 auto;
     }
     .tools button[data-count] {
-      padding: 10px 14px;                         /* 数字按钮稍窄 */
+      padding: 10px 14px;
     }
     #halo { width: 80vmin; height: 80vmin; margin-left:-40vmin; margin-top:-40vmin; }
   }
@@ -216,9 +216,9 @@
 
   // ================= 抽取记录 =================
   var choosed = {};
-  try { choosed = JSON.parse(localStorage.getItem('choosed_v17') || '{}'); } catch(e){}
+  try { choosed = JSON.parse(localStorage.getItem('choosed_v18') || '{}'); } catch(e){}
   function saveChoosed(){
-    try { localStorage.setItem('choosed_v17', JSON.stringify(choosed)); } catch(e){}
+    try { localStorage.setItem('choosed_v18', JSON.stringify(choosed)); } catch(e){}
   }
 
   // ================= 3D 透视星空 =================
