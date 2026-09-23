@@ -98,22 +98,26 @@
     100% { transform: translate(0, 0) scale(1); opacity: 1; }
   }
 
+  /* ============ 按钮区：右对齐 ============ */
   .tools {
     position:absolute;
-    right: max(16px, env(safe-area-inset-right));
-    bottom: max(16px, env(safe-area-inset-bottom));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: auto;                        /* 不铺满，靠内容撑开 */
     z-index:200;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    max-width: 60vw;
+    flex-wrap: nowrap;                 /* 强制一行 */
+    justify-content: flex-end;         /* 右对齐 */
+    align-items: center;
+    gap: 6px;
   }
   .tools button {
-    display:inline-block; margin:4px; padding:10px 20px;
+    display:inline-block; margin:0; padding:10px 18px;
     font-size:16px; border:none; border-radius:8px;
     background:#e6e6e6; color:#333; cursor:pointer;
     font-family:inherit; -webkit-appearance: none; appearance: none;
     transition: transform 0.1s;
+    white-space: nowrap;
   }
   .tools button:active { transform: scale(0.94); }
   .tools button.active { background:#ca3c3c; color:#fff; }
@@ -123,10 +127,39 @@
   .tools .voice { background:#7e57c2; color:#fff; }
   .tools .voice.off { background:#888; }
 
+  /* ============ 手机端：右对齐，整行不换行 ============ */
   @media (max-width: 700px), (pointer: coarse) {
-    .tools { right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); max-width: 96vw; }
-    .tools button { margin: 3px; padding: 12px 16px; font-size: 17px; min-width: 48px; min-height: 48px; }
+    .tools {
+      right: max(6px, env(safe-area-inset-right));
+      left: max(6px, env(safe-area-inset-left));   /* 左右都留一点边距 */
+      bottom: max(6px, env(safe-area-inset-bottom));
+      gap: 4px;
+      justify-content: flex-end;                  /* 依然右对齐 */
+      overflow: hidden;
+    }
+    .tools button {
+      padding: 10px 12px;
+      font-size: 14px;
+      min-height: 44px;
+      border-radius: 6px;
+      flex: 0 1 auto;                             /* 按内容宽度，不拉伸 */
+    }
+    .tools button[data-count] {
+      padding: 10px 14px;                         /* 数字按钮稍窄 */
+    }
     #halo { width: 80vmin; height: 80vmin; margin-left:-40vmin; margin-top:-40vmin; }
+  }
+
+  /* 超窄屏（<380px）再压一点字号 */
+  @media (max-width: 380px) {
+    .tools button {
+      font-size: 13px;
+      padding: 10px 8px;
+      min-height: 40px;
+    }
+    .tools button[data-count] {
+      padding: 10px 10px;
+    }
   }
 </style>
 </head>
@@ -140,7 +173,7 @@
   <button data-count="2">2</button>
   <button data-count="1" class="active">1</button>
   <button id="btnStart" class="start">开始</button>
-  <button id="btnReset" class="reset">重置抽取</button>
+  <button id="btnReset" class="reset">重置</button>
   <button id="btnVoice" class="voice">🔊</button>
 </div>
 
@@ -183,9 +216,9 @@
 
   // ================= 抽取记录 =================
   var choosed = {};
-  try { choosed = JSON.parse(localStorage.getItem('choosed_v15') || '{}'); } catch(e){}
+  try { choosed = JSON.parse(localStorage.getItem('choosed_v17') || '{}'); } catch(e){}
   function saveChoosed(){
-    try { localStorage.setItem('choosed_v15', JSON.stringify(choosed)); } catch(e){}
+    try { localStorage.setItem('choosed_v17', JSON.stringify(choosed)); } catch(e){}
   }
 
   // ================= 3D 透视星空 =================
@@ -366,7 +399,6 @@
   var speechPrimed = false;
   var pendingTTS = null;
 
-  // 清理 iOS 26 会引发 bug 的字符
   function sanitizeForTTS(text){
     return String(text)
       .replace(/[<>]/g, function(c){ return c === '<' ? '＜' : '＞'; })
@@ -374,7 +406,6 @@
       .trim();
   }
 
-  // 轮询加载语音列表（iOS 异步加载，必须轮询）
   function pollVoices(cb){
     if (!speechSupported) return;
     var attempts = 0;
@@ -401,7 +432,6 @@
     }, 200);
   }
 
-  // 在用户手势中预热语音
   function primeSpeech(){
     if (!speechSupported || speechPrimed) return;
     speechPrimed = true;
@@ -453,11 +483,10 @@
       u.onerror = function(){ setTimeout(next, 130); };
       try { window.speechSynthesis.speak(u); } catch(e){}
     }
-    // 同步触发，不要在 setTimeout 里调用 speak()
     next();
   }
 
-  // ===== 页面任何一次点击都自动预热语音（iOS 关键） =====
+  // 页面任何一次手势都自动预热语音
   function bindPrimeOnAnyGesture(){
     var done = false;
     function handler(){
@@ -474,7 +503,6 @@
   }
   bindPrimeOnAnyGesture();
 
-  // 语音开关按钮
   btnVoice.addEventListener('click', function(){
     if (!speechSupported){ alert('当前浏览器不支持语音播报。'); return; }
     primeSpeech();
@@ -498,7 +526,6 @@
     }
   });
 
-  // 页面加载后就开始轮询语音列表
   if (speechSupported){
     pollVoices(function(){ /* 静默准备 */ });
   }
